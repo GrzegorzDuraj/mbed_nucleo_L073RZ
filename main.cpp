@@ -21,8 +21,6 @@
 #include "MQTTWiFi.h"
 #include <ctype.h>
 #include "X_NUCLEO_IKS01A2/XNucleoIKS01A2.h"
-//#include "NDefLib/NDefNfcTag.h"
-#include "NDefLib/RecordType/RecordURI.h"
 
 //------------------------------------
 // Hyperterminal configuration
@@ -34,7 +32,7 @@ bool quickstartMode = true;
 
 #define ORG_QUICKSTART           // comment to connect to play.internetofthings.ibmcloud.com
 //#define SUBSCRIBE              // uncomment to subscribe to broker msgs (not to be used with IBM broker) 
-//#define X_NUCLEO_NFC01A1_PRESENT // uncomment to add NFC support
+
     
 #define MQTT_MAX_PACKET_SIZE 250   
 #define MQTT_MAX_PAYLOAD_SIZE 300 
