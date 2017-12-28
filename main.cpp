@@ -20,10 +20,8 @@
 #include "MQTTClient.h"
 #include "MQTTWiFi.h"
 #include <ctype.h>
-//#include "x_nucleo_iks01a1.h"
-//#include "X_NUCLEO_NFC01A1/XNucleoNFC01A1.h"
 #include "X_NUCLEO_IKS01A2/XNucleoIKS01A2.h"
-#include "NDefLib/NDefNfcTag.h"
+//#include "NDefLib/NDefNfcTag.h"
 #include "NDefLib/RecordType/RecordURI.h"
 
 //------------------------------------
@@ -274,27 +272,6 @@ int main()
       while (true)
       wait(1.0); // Permanent failures - don't retry
    }
-#ifdef X_NUCLEO_NFC01A1_PRESENT      
-   // program NFC with broker URL        
-   XNucleoNFC01A1 *nfcNucleo = XNucleoNFC01A1::instance(*i2c, NULL, XNucleoNFC01A1::DEFAULT_GPO_PIN, XNucleoNFC01A1::DEFAULT_RF_DISABLE_PIN, NC,NC,NC);
-   NDefLib::NDefNfcTag& tag = nfcNucleo->get_M24SR().get_NDef_tag();
-   printf("NFC Init done: !\r\n");
-   //open the i2c session with the nfc chip
-   if(tag.open_session()){
-       //create the NDef message and record
-       NDefLib::Message msg;
-       NDefLib::RecordURI rUri(NDefLib::RecordURI::HTTPS, subscription_url);
-       msg.add_record(&rUri);
-        //write the tag
-        if(tag.write(msg)){
-            printf("Tag writed \r\n");
-        }
-        //close the i2c session
-        if(!tag.close_session()){
-            printf("Error Closing the session\r\n");
-        }
-    }else printf("Error open Session\r\n");             
-#endif    
    myled=1;         
    int count = 0;    
 //    tyeld.start();    
