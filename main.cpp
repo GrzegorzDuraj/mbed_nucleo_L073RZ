@@ -209,10 +209,10 @@ int publish(MQTT::Client<MQTTWiFi, Countdown, MQTT_MAX_PACKET_SIZE>* client, MQT
     char buf[MQTT_MAX_PAYLOAD_SIZE];
     float temp, press, hum;
     temp_sensor1->get_temperature(&temp);
-    //pressure_sensor->get_pressure(&press);
+    pressure_sensor->get_pressure(&press);
     humidity_sensor->get_humidity(&hum);
  //   temp = 48.0;
-    press = 1000.8;
+//    press = 1000.8;
    // hum = 199.9;
     printf("press%f  temp%f   hum%f\n",press, temp, hum );
     sprintf(buf,
