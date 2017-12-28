@@ -45,7 +45,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 
-#include <Component.h>
+#include "X_NUCLEO_IKS01A2/ST_INTERFACES/Common/Component.h"
 
 
 /* Classes  ------------------------------------------------------------------*/

@@ -48,7 +48,7 @@
 #include "X_NUCLEO_IKS01A2/Components/LSM303AGRSensor/LSM303AGRMagSensor.h"
 #include "X_NUCLEO_IKS01A2/Components/LPS22HBSensor/LPS22HBSensor.h"
 #include "X_NUCLEO_IKS01A2/Components/LSM6DSLSensor/LSM6DSLSensor.h"
-#include "DevI2C.h"
+#include "X_NUCLEO_COMMON/DevI2C/DevI2C.h"
 
 /* Macros -------------------------------------------------------------------*/
 #define CALL_METH(obj, meth, param, ret) ((obj == NULL) ?       \

@@ -38,31 +38,36 @@
 
 /* Includes ------------------------------------------------------------------*/
 
-#include "mbed.h"
-#include "DevI2C.h"
 #include "LSM303AGRMagSensor.h"
-#include "LSM303AGR_mag_driver.h"
 
 
 /* Class Implementation ------------------------------------------------------*/
+LSM303AGRMagSensor::LSM303AGRMagSensor(SPI *spi, PinName cs_pin, PinName intmag_pin) :
+                                      _dev_spi(spi), _cs_pin(cs_pin), _intmag_pin(intmag_pin) // SPI3W ONLY
+{
+    assert (spi);
+    if (cs_pin == NC) 
+    {
+        printf ("ERROR LSM303AGRMagSensor CS MUST NOT BE NC\n\r");        
+        _dev_spi = NULL;
+        _dev_i2c=NULL;
+        return;
+    }       
+    _cs_pin = 0;     // enable SPI3W disable I2C
+    _dev_i2c=NULL;    
 
+    LSM303AGR_ACC_W_SPI_mode((void *)this, LSM303AGR_ACC_SIM_3_WIRES);    
+}
 /** Constructor
  * @param i2c object of an helper class which handles the I2C peripheral
  * @param address the address of the component's instance
  */
-LSM303AGRMagSensor::LSM303AGRMagSensor(DevI2C &i2c) : _dev_i2c(i2c)
+LSM303AGRMagSensor::LSM303AGRMagSensor(DevI2C *i2c, uint8_t address, PinName intmag_pin) : 
+                                       _dev_i2c(i2c), _address(address), _cs_pin(NC), _intmag_pin(intmag_pin)
 {
-  _address = LSM303AGR_MAG_I2C_ADDRESS;
-};
-
-/** Constructor
- * @param i2c object of an helper class which handles the I2C peripheral
- * @param address the address of the component's instance
- */
-LSM303AGRMagSensor::LSM303AGRMagSensor(DevI2C &i2c, uint8_t address) : _dev_i2c(i2c), _address(address)
-{
-
-};
+    assert (i2c);
+    _dev_spi = NULL;      
+}
 
 /**
  * @brief     Initializing the component.

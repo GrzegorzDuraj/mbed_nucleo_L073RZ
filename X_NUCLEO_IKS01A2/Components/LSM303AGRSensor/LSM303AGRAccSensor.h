@@ -44,9 +44,10 @@
 
 /* Includes ------------------------------------------------------------------*/
 
-#include "DevI2C.h"
+#include "X_NUCLEO_COMMON/DevI2C/DevI2C.h"
 #include "LSM303AGR_acc_driver.h"
-#include "MotionSensor.h"
+#include "X_NUCLEO_IKS01A2/ST_INTERFACES/Sensors/MotionSensor.h"
+#include <assert.h>
 
 /* Defines -------------------------------------------------------------------*/
 #define LSM303AGR_ACC_SENSITIVITY_FOR_FS_2G_NORMAL_MODE               3.900f  /**< Sensitivity value for 2 g full scale and normal mode [mg/LSB] */
@@ -71,8 +72,8 @@
 class LSM303AGRAccSensor : public MotionSensor
 {
   public:
-    LSM303AGRAccSensor(DevI2C &i2c);
-    LSM303AGRAccSensor(DevI2C &i2c, uint8_t address);
+    LSM303AGRAccSensor(SPI *spi, PinName cs_pin, PinName int1_pin=NC, PinName int2_pin=NC); // SPI3W ONLY
+    LSM303AGRAccSensor(DevI2C *i2c, uint8_t address=LSM303AGR_ACC_I2C_ADDRESS, PinName int1_pin=NC, PinName int2_pin=NC);
     virtual int init(void *init);
     virtual int read_id(uint8_t *id);
     virtual int get_x_axes(int32_t *pData);
@@ -96,7 +97,19 @@ class LSM303AGRAccSensor : public MotionSensor
      */
     uint8_t io_read(uint8_t* pBuffer, uint8_t RegisterAddr, uint16_t NumByteToRead)
     {
-        return (uint8_t) _dev_i2c.i2c_read(pBuffer, _address, RegisterAddr, NumByteToRead);
+        if (_dev_spi) {
+        /* Write Reg Address */
+            _dev_spi->lock();
+            _cs_pin = 0;           
+            /* Write RD Reg Address with RD bit*/
+            uint8_t TxByte = RegisterAddr | 0x80;    
+            _dev_spi->write((char *)&TxByte, 1, (char *)pBuffer, (int) NumByteToRead);
+            _cs_pin = 1;
+            _dev_spi->unlock(); 
+            return 0;
+        }                       
+        if (_dev_i2c) return (uint8_t) _dev_i2c->i2c_read(pBuffer, _address, RegisterAddr, NumByteToRead);
+        return 1;
     }
     
     /**
@@ -108,7 +121,17 @@ class LSM303AGRAccSensor : public MotionSensor
      */
     uint8_t io_write(uint8_t* pBuffer, uint8_t RegisterAddr, uint16_t NumByteToWrite)
     {
-        return (uint8_t) _dev_i2c.i2c_write(pBuffer, _address, RegisterAddr, NumByteToWrite);
+        if (_dev_spi) { 
+            _dev_spi->lock();
+            _cs_pin = 0;
+            int data = _dev_spi->write(RegisterAddr);                    
+            _dev_spi->write((char *)pBuffer, (int) NumByteToWrite, NULL, 0);                     
+            _cs_pin = 1;                    
+            _dev_spi->unlock();
+            return data;                    
+        }                
+        if (_dev_i2c) return (uint8_t)_dev_i2c->i2c_write(pBuffer, _address, RegisterAddr, NumByteToWrite);
+        return 1;
     }
 
   private:
@@ -119,10 +142,14 @@ class LSM303AGRAccSensor : public MotionSensor
     int get_x_sensitivity_hr_mode(float *sensitivity );
 
     /* Helper classes. */
-    DevI2C &_dev_i2c;
+    DevI2C *_dev_i2c;
+    SPI    *_dev_spi;    
     
     /* Configuration */
     uint8_t _address;
+    DigitalOut  _cs_pin;        
+    InterruptIn _int1_pin; 
+    InterruptIn _int2_pin;  
     
     uint8_t _is_enabled;
     float _last_odr;

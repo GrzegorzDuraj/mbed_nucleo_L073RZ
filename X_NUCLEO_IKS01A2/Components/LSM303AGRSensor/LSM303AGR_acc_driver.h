@@ -604,8 +604,8 @@ mems_status_t LSM303AGR_ACC_R_FIFO_Click_on_INT1(void *handle, LSM303AGR_ACC_I1_
 * Permission    : RW
 *******************************************************************************/
 typedef enum {
-    LSM303AGR_ACC_SIM_4_WIRES        =0x00,
-    LSM303AGR_ACC_SIM_3_WIRES        =0x01,
+//    LSM303AGR_ACC_SIM_4_WIRES        =0x00,  // FIXME not allowed by the component
+    LSM303AGR_ACC_SIM_3_WIRES        =0x01
 } LSM303AGR_ACC_SIM_t;
 
 #define       LSM303AGR_ACC_SIM_MASK      0x01

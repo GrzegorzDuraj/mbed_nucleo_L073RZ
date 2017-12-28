@@ -38,31 +38,42 @@
 
 /* Includes ------------------------------------------------------------------*/
 
-#include "mbed.h"
-#include "DevI2C.h"
+
 #include "LPS22HBSensor.h"
-#include "LPS22HB_driver.h"
 
 
 /* Class Implementation ------------------------------------------------------*/
 
+LPS22HBSensor::LPS22HBSensor(SPI *spi, PinName cs_pin, PinName int_pin, SPI_type_t spi_type)  : _dev_spi(spi), _cs_pin(cs_pin), _int_pin(int_pin), _spi_type(spi_type)
+{
+    assert (spi);
+    if (cs_pin == NC) 
+    {
+        printf ("ERROR LPS22HBSensor CS MUST NOT BE NC\n\r");       
+        _dev_spi = NULL;
+        _dev_i2c=NULL;
+        return;
+    }       
+
+    _cs_pin = 1;    
+    _dev_i2c=NULL;    
+    
+    if (_spi_type == SPI3W) LPS22HB_Set_SpiInterface ((void *)this, LPS22HB_SPI_3_WIRE);
+    else if (_spi_type == SPI4W) LPS22HB_Set_SpiInterface ((void *)this, LPS22HB_SPI_4_WIRE);
+    
+    LPS22HB_Set_I2C ((void *)this, LPS22HB_DISABLE);
+}
+
 /** Constructor
  * @param i2c object of an helper class which handles the I2C peripheral
  * @param address the address of the component's instance
  */
-LPS22HBSensor::LPS22HBSensor(DevI2C &i2c) : _dev_i2c(i2c)
+LPS22HBSensor::LPS22HBSensor(DevI2C *i2c, uint8_t address, PinName int_pin) : 
+                            _dev_i2c(i2c), _address(address), _cs_pin(NC), _int_pin(int_pin)
 {
-  _address = LPS22HB_ADDRESS_HIGH;
-};
-
-
-/** Constructor
- * @param i2c object of an helper class which handles the I2C peripheral
- * @param address the address of the component's instance
- */
-LPS22HBSensor::LPS22HBSensor(DevI2C &i2c, uint8_t address) : _dev_i2c(i2c), _address(address)
-{
-
+    assert (i2c);
+    _dev_spi = NULL;
+    LPS22HB_Set_I2C ((void *)this, LPS22HB_ENABLE);         
 };
 
 /**

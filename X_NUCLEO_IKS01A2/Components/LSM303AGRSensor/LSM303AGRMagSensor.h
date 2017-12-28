@@ -44,10 +44,11 @@
 
 /* Includes ------------------------------------------------------------------*/
 
-#include "DevI2C.h"
+#include "X_NUCLEO_COMMON/DevI2C/DevI2C.h"
 #include "LSM303AGR_mag_driver.h"
-#include "MagneticSensor.h"
-
+#include "LSM303AGR_acc_driver.h"
+#include "X_NUCLEO_IKS01A2/ST_INTERFACES/Sensors/MagneticSensor.h"
+#include <assert.h>
 
 /* Class Declaration ---------------------------------------------------------*/
 
@@ -58,8 +59,8 @@
 class LSM303AGRMagSensor : public MagneticSensor
 {
   public:
-    LSM303AGRMagSensor(DevI2C &i2c);
-    LSM303AGRMagSensor(DevI2C &i2c, uint8_t address);
+    LSM303AGRMagSensor(SPI *spi, PinName cs_pin, PinName intmag_pin=NC);  // SPI3W ONLY
+    LSM303AGRMagSensor(DevI2C *i2c, uint8_t address=LSM303AGR_MAG_I2C_ADDRESS, PinName intmag_pin=NC);
     virtual int init(void *init);
     virtual int read_id(uint8_t *id);
     virtual int get_m_axes(int32_t *pData);
@@ -83,7 +84,19 @@ class LSM303AGRMagSensor : public MagneticSensor
      */
     uint8_t io_read(uint8_t* pBuffer, uint8_t RegisterAddr, uint16_t NumByteToRead)
     {
-        return (uint8_t) _dev_i2c.i2c_read(pBuffer, _address, RegisterAddr, NumByteToRead);
+        if (_dev_spi) {
+        /* Write Reg Address */
+            _dev_spi->lock();
+            _cs_pin = 0;           
+            /* Write RD Reg Address with RD bit*/
+            uint8_t TxByte = RegisterAddr | 0x80;    
+            _dev_spi->write((char *)&TxByte, 1, (char *)pBuffer, (int) NumByteToRead);
+            _cs_pin = 1;
+            _dev_spi->unlock(); 
+            return 0;
+        }                       
+        if (_dev_i2c) return (uint8_t) _dev_i2c->i2c_read(pBuffer, _address, RegisterAddr, NumByteToRead);
+        return 1;
     }
     
     /**
@@ -95,16 +108,29 @@ class LSM303AGRMagSensor : public MagneticSensor
      */
     uint8_t io_write(uint8_t* pBuffer, uint8_t RegisterAddr, uint16_t NumByteToWrite)
     {
-        return (uint8_t) _dev_i2c.i2c_write(pBuffer, _address, RegisterAddr, NumByteToWrite);
+        if (_dev_spi) { 
+            _dev_spi->lock();
+            _cs_pin = 0;
+            int data = _dev_spi->write(RegisterAddr);                    
+            _dev_spi->write((char *)pBuffer, (int) NumByteToWrite, NULL, 0);                     
+            _cs_pin = 1;                    
+            _dev_spi->unlock();
+            return data;                    
+        }        
+        if (_dev_i2c) return (uint8_t) _dev_i2c->i2c_write(pBuffer, _address, RegisterAddr, NumByteToWrite);    
+        return 1;
     }
 
   private:
 
     /* Helper classes. */
-    DevI2C &_dev_i2c;
+    DevI2C *_dev_i2c;
+    SPI    *_dev_spi;         
     
     /* Configuration */
     uint8_t _address;
+    DigitalOut  _cs_pin;
+    InterruptIn _intmag_pin;     
 };
 
 #ifdef __cplusplus

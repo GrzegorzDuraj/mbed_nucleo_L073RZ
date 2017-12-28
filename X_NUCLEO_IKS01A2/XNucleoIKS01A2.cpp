@@ -48,11 +48,11 @@ XNucleoIKS01A2 *XNucleoIKS01A2::_instance = NULL;
  * @brief  Constructor
  */
 XNucleoIKS01A2::XNucleoIKS01A2(DevI2C *ext_i2c, PinName int1, PinName int2) : dev_i2c(ext_i2c),
-    ht_sensor(new HTS221Sensor(*dev_i2c)),
-    magnetometer(new LSM303AGRMagSensor(*dev_i2c)),
-    accelerometer(new LSM303AGRAccSensor(*dev_i2c)),
-    pt_sensor(new LPS22HBSensor(*dev_i2c)),
-    acc_gyro(new LSM6DSLSensor(*dev_i2c, int1, int2))
+    ht_sensor(new HTS221Sensor(dev_i2c)),
+    magnetometer(new LSM303AGRMagSensor(dev_i2c)),
+    accelerometer(new LSM303AGRAccSensor(dev_i2c)),
+    pt_sensor(new LPS22HBSensor(dev_i2c)),
+    acc_gyro(new LSM6DSLSensor(dev_i2c, LSM6DSL_ACC_GYRO_I2C_ADDRESS_HIGH, int1, int2))
 { 
   ht_sensor->init(NULL);
   magnetometer->init(NULL);

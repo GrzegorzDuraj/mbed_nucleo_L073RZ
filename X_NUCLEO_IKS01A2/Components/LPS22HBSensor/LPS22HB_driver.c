@@ -341,13 +341,13 @@ LPS22HB_Error_et LPS22HB_Get_Bdu(void *handle, LPS22HB_Bdu_et* bdu)
 */
 LPS22HB_Error_et LPS22HB_Set_SpiInterface(void *handle, LPS22HB_SPIMode_et spimode)
 {
-  uint8_t tmp;
-
+  uint8_t tmp=0;  //deft LPS22HB_CTRL_REG1 value
 
   LPS22HB_assert_param(IS_LPS22HB_SPIMode(spimode));
 
-  if(LPS22HB_read_reg(handle, LPS22HB_CTRL_REG1, 1, &tmp))
-    return LPS22HB_ERROR;
+/** FIXME could not read before setting SPI mode **/	
+//  if(LPS22HB_read_reg(handle, LPS22HB_CTRL_REG1, 1, &tmp))
+//    return LPS22HB_ERROR;
 
   tmp &= ~LPS22HB_SIM_MASK;
   tmp |= (uint8_t)spimode;

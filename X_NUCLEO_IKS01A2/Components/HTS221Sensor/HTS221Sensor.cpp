@@ -38,31 +38,28 @@
 
 /* Includes ------------------------------------------------------------------*/
 
-#include "mbed.h"
-#include "DevI2C.h"
+
 #include "HTS221Sensor.h"
-#include "HTS221_driver.h"
 
 
 /* Class Implementation ------------------------------------------------------*/
 
-/** Constructor
- * @param i2c object of an helper class which handles the I2C peripheral
- * @param address the address of the component's instance
- */
-HTS221Sensor::HTS221Sensor(DevI2C &i2c) : _dev_i2c(i2c)
-{
-  _address = HTS221_I2C_ADDRESS;
+HTS221Sensor::HTS221Sensor(SPI *spi, PinName cs_pin, PinName drdy_pin) : 
+                           _dev_spi(spi), _cs_pin(cs_pin), _drdy_pin(drdy_pin)  // SPI3W ONLY
+{    
+    assert(spi); 
+    _dev_i2c = NULL;
 };
 
-
 /** Constructor
  * @param i2c object of an helper class which handles the I2C peripheral
  * @param address the address of the component's instance
  */
-HTS221Sensor::HTS221Sensor(DevI2C &i2c, uint8_t address) : _dev_i2c(i2c), _address(address)
+HTS221Sensor::HTS221Sensor(DevI2C *i2c, uint8_t address, PinName drdy_pin) :
+                           _dev_i2c(i2c), _address(address), _cs_pin(NC), _drdy_pin(drdy_pin)
 {
-
+    assert(i2c);
+    _dev_spi = NULL;
 };
 
 /**

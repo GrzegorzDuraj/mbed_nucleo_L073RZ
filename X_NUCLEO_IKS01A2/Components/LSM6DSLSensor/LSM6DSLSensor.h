@@ -45,10 +45,11 @@
 
 /* Includes ------------------------------------------------------------------*/
 
-#include "DevI2C.h"
+#include "X_NUCLEO_COMMON/DevI2C/DevI2C.h"
 #include "LSM6DSL_acc_gyro_driver.h"
-#include "MotionSensor.h"
-#include "GyroSensor.h"
+#include "X_NUCLEO_IKS01A2/ST_INTERFACES/Sensors/MotionSensor.h"
+#include "X_NUCLEO_IKS01A2/ST_INTERFACES/Sensors/GyroSensor.h"
+#include <assert.h>
 
 /* Defines -------------------------------------------------------------------*/
 
@@ -117,7 +118,7 @@ typedef struct
 } LSM6DSL_Event_Status_t;
 
 /* Class Declaration ---------------------------------------------------------*/
-
+   
 /**
  * Abstract class of an LSM6DSL Inertial Measurement Unit (IMU) 6 axes
  * sensor.
@@ -125,8 +126,9 @@ typedef struct
 class LSM6DSLSensor : public MotionSensor, public GyroSensor
 {
   public:
-    LSM6DSLSensor(DevI2C &i2c, PinName INT1_pin, PinName INT2_pin);
-    LSM6DSLSensor(DevI2C &i2c, PinName INT1_pin, PinName INT2_pin, uint8_t address);
+    enum SPI_type_t {SPI3W, SPI4W};      
+    LSM6DSLSensor(SPI *spi, PinName cs_pin, PinName INT1_pin=NC, PinName INT2_pin=NC, SPI_type_t spi_type=SPI4W);  
+    LSM6DSLSensor(DevI2C *i2c, uint8_t address=LSM6DSL_ACC_GYRO_I2C_ADDRESS_HIGH, PinName INT1_pin=NC, PinName INT2_pin=NC);
     virtual int init(void *init);
     virtual int read_id(uint8_t *id);
     virtual int get_x_axes(int32_t *pData);
@@ -248,8 +250,27 @@ class LSM6DSLSensor : public MotionSensor, public GyroSensor
      * @retval 0 if ok, an error code otherwise.
      */
     uint8_t io_read(uint8_t* pBuffer, uint8_t RegisterAddr, uint16_t NumByteToRead)
-    {
-        return (uint8_t) _dev_i2c.i2c_read(pBuffer, _address, RegisterAddr, NumByteToRead);
+    {        
+        if (_dev_spi) {
+        /* Write Reg Address */
+            _dev_spi->lock();
+            _cs_pin = 0;           
+            if (_spi_type == SPI4W) {            
+                _dev_spi->write(RegisterAddr | 0x80);
+                for (int i=0; i<NumByteToRead; i++) {
+                    *(pBuffer+i) = _dev_spi->write(0x00);
+                }
+            } else if (_spi_type == SPI3W){
+                /* Write RD Reg Address with RD bit*/
+                uint8_t TxByte = RegisterAddr | 0x80;    
+                _dev_spi->write((char *)&TxByte, 1, (char *)pBuffer, (int) NumByteToRead);
+            }            
+            _cs_pin = 1;
+            _dev_spi->unlock(); 
+            return 0;
+        }                       
+        if (_dev_i2c) return (uint8_t) _dev_i2c->i2c_read(pBuffer, _address, RegisterAddr, NumByteToRead);
+        return 1;
     }
     
     /**
@@ -261,7 +282,18 @@ class LSM6DSLSensor : public MotionSensor, public GyroSensor
      */
     uint8_t io_write(uint8_t* pBuffer, uint8_t RegisterAddr, uint16_t NumByteToWrite)
     {
-        return (uint8_t) _dev_i2c.i2c_write(pBuffer, _address, RegisterAddr, NumByteToWrite);
+        int data;   
+        if (_dev_spi) { 
+            _dev_spi->lock();
+            _cs_pin = 0;
+            data = _dev_spi->write(RegisterAddr);                    
+            _dev_spi->write((char *)pBuffer, (int) NumByteToWrite, NULL, 0);                     
+            _cs_pin = 1;                    
+            _dev_spi->unlock();
+            return data;                    
+        }        
+        if (_dev_i2c) return (uint8_t) _dev_i2c->i2c_write(pBuffer, _address, RegisterAddr, NumByteToWrite);    
+        return 1;
     }
 
   private:
@@ -271,13 +303,15 @@ class LSM6DSLSensor : public MotionSensor, public GyroSensor
     int set_g_odr_when_disabled(float odr);
 
     /* Helper classes. */
-    DevI2C &_dev_i2c;
-
-    InterruptIn _int1_irq;
-    InterruptIn _int2_irq;
-
+    DevI2C *_dev_i2c;
+    SPI    *_dev_spi;
+    SPI_type_t _spi_type;
+    
     /* Configuration */
     uint8_t _address;
+    DigitalOut  _cs_pin;        
+    InterruptIn _int1_irq;
+    InterruptIn _int2_irq;
     
     uint8_t _x_is_enabled;
     float _x_last_odr;

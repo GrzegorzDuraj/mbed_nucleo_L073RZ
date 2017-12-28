@@ -1107,10 +1107,10 @@ mems_status_t LSM303AGR_ACC_R_FIFO_Click_on_INT1(void *handle, LSM303AGR_ACC_I1_
 *******************************************************************************/
 mems_status_t LSM303AGR_ACC_W_SPI_mode(void *handle, LSM303AGR_ACC_SIM_t newValue)
 {
-  u8_t value;
+  u8_t value=0;
 
-  if( !LSM303AGR_ACC_read_reg(handle, LSM303AGR_ACC_CTRL_REG4, &value) )
-    return MEMS_ERROR;
+//  if( !LSM303AGR_ACC_read_reg(handle, LSM303AGR_ACC_CTRL_REG4, &value) )
+//    return MEMS_ERROR;
 
   value &= ~LSM303AGR_ACC_SIM_MASK; 
   value |= newValue;

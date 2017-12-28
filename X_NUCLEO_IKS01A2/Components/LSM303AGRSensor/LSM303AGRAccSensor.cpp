@@ -38,29 +38,38 @@
 
 /* Includes ------------------------------------------------------------------*/
 
-#include "DevI2C.h"
 #include "LSM303AGRAccSensor.h"
-#include "LSM303AGR_acc_driver.h"
 
 
 /* Class Implementation ------------------------------------------------------*/
 
-/** Constructor
- * @param i2c object of an helper class which handles the I2C peripheral
- * @param address the address of the component's instance
- */
-LSM303AGRAccSensor::LSM303AGRAccSensor(DevI2C &i2c) : _dev_i2c(i2c)
+LSM303AGRAccSensor::LSM303AGRAccSensor(SPI *spi, PinName cs_pin, PinName int1_pin, PinName int2_pin) :
+                                       _dev_spi(spi), _cs_pin(cs_pin), _int1_pin(int1_pin), _int2_pin(int2_pin)  // SPI3W ONLY
 {
-  _address = LSM303AGR_ACC_I2C_ADDRESS;
-};
+    assert (spi);
+    if (cs_pin == NC) 
+    {
+        printf ("ERROR LSM303AGRAccSensor CS MUST NOT BE NC\n\r");      
+        _dev_spi = NULL;
+        _dev_i2c=NULL;
+        return;
+    }       
+    _cs_pin = 0;     // enable SPI3W disable I2C
+    _dev_i2c=NULL;    
+
+  LSM303AGR_ACC_W_SPI_mode((void *)this, LSM303AGR_ACC_SIM_3_WIRES);  
+}
+
 
 /** Constructor
  * @param i2c object of an helper class which handles the I2C peripheral
  * @param address the address of the component's instance
  */
-LSM303AGRAccSensor::LSM303AGRAccSensor(DevI2C &i2c, uint8_t address) : _dev_i2c(i2c), _address(address)
+LSM303AGRAccSensor::LSM303AGRAccSensor(DevI2C *i2c, uint8_t address, PinName int1_pin, PinName int2_pin) : 
+                                       _dev_i2c(i2c), _address(address), _cs_pin(NC), _int1_pin(int1_pin), _int2_pin(int2_pin)
 {
-
+    assert (i2c);
+    _dev_spi = NULL;
 };
 
 /**

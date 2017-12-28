@@ -1,15 +1,14 @@
 /**
  ******************************************************************************
- * @file    TempSensor.h
+ * @file    DbgMCU.h
  * @author  AST / EST
  * @version V0.0.1
- * @date    13-April-2015
- * @brief   This file contains the abstract class describing in general
- *          the interfaces of a temperature sensor
+ * @date    30-March-2015
+ * @brief   Header file for enabling debugging in sleep modes for STM32 MCUs
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; COPYRIGHT(c) 2015 STMicroelectronics</center></h2>
+ * <h2><center>&copy; COPYRIGHT(c) 2014 STMicroelectronics</center></h2>
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -36,56 +35,30 @@
  ******************************************************************************
  */
 
-
 /* Define to prevent from recursive inclusion --------------------------------*/
-
-#ifndef __TEMP_SENSOR_CLASS_H
-#define __TEMP_SENSOR_CLASS_H
-
+#ifndef __DBG_MCU_H
+#define __DBG_MCU_H
 
 /* Includes ------------------------------------------------------------------*/
 
-#include <X_NUCLEO_IKS01A2/ST_INTERFACES/Common/Component.h>
-
-
-/* Classes  ------------------------------------------------------------------*/
-
-/**
- * An abstract class for Temperature sensors
+/* Classes -------------------------------------------------------------------*/
+/** Helper class DbgMCU providing a default constructor which enables debugging
+ *  on STM32 MCUs while using sleep modes.
  */
-class TempSensor : public Component {
-public:
-
-	/**
-	 * @brief       Get current temperature in degrees Celsius [°C]
-	 * @param[out]  pf_data Pointer to where to store temperature to
-	 * @return      0 in case of success, an error code otherwise
-	 */
-	virtual int get_temperature(float *pf_data) = 0;
-
-	/**
-	 * @brief       Get current temperature in degrees Fahrenheit [°F]
-	 * @param[out]  pf_data Pointer to where to store temperature to
-	 * @return      0 in case of success, an error code otherwise
-	 */
-	virtual int get_fahrenheit(float *pf_data) {
-		float celsius;
-		int ret;
-
-		ret = get_temperature(&celsius);
-		if (ret) {
-			return ret;
-		}
-
-		*pf_data = ((celsius * 1.8f) + 32.0f);
-
-		return 0;
+class DbgMCU
+{
+ public:
+	/** Create a DbgMCU dummy object */
+        DbgMCU(void) {
+		/* the following code is NOT portable */
+                volatile uint32_t *dbgmcu_creg = (uint32_t*)0xE0042004;
+                uint32_t tmp = *dbgmcu_creg;
+		
+		tmp &= ~(0xE7);
+		tmp |= 0x27; // Set asynchronous communication via DBGMCU_CR (for ITM/printf)
+		// tmp |= 0xE7; // Set 4-pin tracing via DBGMCU_CR (for ETM)
+                *dbgmcu_creg = tmp;
 	}
-
-    /**
-     * @brief Destructor.
-     */
-	virtual ~TempSensor() {};
 };
 
-#endif /* __TEMP_SENSOR_CLASS_H */
+#endif /* __DBG_MCU_H */
